@@ -77,16 +77,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: " App" },
-      { name: "description", content: " Generated Project" },
-      { name: "author", content: "" },
-      { property: "og:title", content: " App" },
-      { property: "og:description", content: " Generated Project" },
+      { title: "CuentaClara — Simulador de crédito para pymes" },
+      {
+        name: "description",
+        content:
+          "Motor de cálculo financiero para pequeños negocios en Colombia: cuotas, amortización, cartera y refinanciación.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

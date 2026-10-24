@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { FileUp, ShieldCheck, Sparkles, Lock } from "lucide-react";
+import { FileUp, ShieldCheck, Sparkles, Lock, Trash2, Plus, PencilLine } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { formatoCOP } from "@/lib/finanzas";
 import { diagnosticar, extraerObligaciones, REPORTE_EJEMPLO, type Obligacion } from "@/lib/historial";
@@ -36,12 +36,20 @@ async function leerPdf(file: File): Promise<string> {
   return lineas.join("\n");
 }
 
+const OBLIGACION_VACIA: Obligacion = { entidad: "", tipo: "Consumo", saldo: 0, cuota: 0, diasMora: 0, cuotaEstimada: true };
+
 function MiHistorial() {
   const [obligaciones, setObligaciones] = useState<Obligacion[] | null>(null);
+  const [confirmado, setConfirmado] = useState(false);
   const [ingreso, setIngreso] = useState(3_000_000);
   const [cargando, setCargando] = useState(false);
   const [aviso, setAviso] = useState("");
   const [arrastrando, setArrastrando] = useState(false);
+
+  const cargar = (lista: Obligacion[]) => {
+    setObligaciones(lista);
+    setConfirmado(false);
+  };
 
   const procesar = async (file: File) => {
     setCargando(true);
@@ -49,8 +57,8 @@ function MiHistorial() {
     try {
       const texto = file.type === "application/pdf" ? await leerPdf(file) : await file.text();
       const o = extraerObligaciones(texto);
-      if (o.length === 0) setAviso("No encontramos deudas con montos en ese archivo. Prueba con el reporte de ejemplo.");
-      setObligaciones(o);
+      if (o.length === 0) setAviso("No encontramos deudas con montos en ese archivo. Prueba con el reporte de ejemplo o agrega tus deudas a mano.");
+      cargar(o);
     } catch {
       setAviso("No pudimos leer el archivo. Asegúrate de que sea un PDF con texto (no una foto).");
     } finally {
@@ -58,9 +66,29 @@ function MiHistorial() {
     }
   };
 
-  const d = obligaciones ? diagnosticar(obligaciones, ingreso) : null;
+  const actualizar = (i: number, campo: keyof Obligacion, valor: string) => {
+    setObligaciones((prev) =>
+      prev
+        ? prev.map((o, j) =>
+            j === i
+              ? {
+                  ...o,
+                  [campo]: campo === "entidad" || campo === "tipo" ? valor : Number(valor.replace(/[^\d]/g, "")) || 0,
+                  ...(campo === "cuota" ? { cuotaEstimada: false } : {}),
+                }
+              : o,
+          )
+        : prev,
+    );
+  };
+
+  const eliminar = (i: number) => setObligaciones((prev) => (prev ? prev.filter((_, j) => j !== i) : prev));
+  const agregar = () => setObligaciones((prev) => [...(prev ?? []), { ...OBLIGACION_VACIA }]);
+
+  const d = confirmado && obligaciones && obligaciones.length > 0 ? diagnosticar(obligaciones, ingreso) : null;
   const color = d?.nivel === "Excelente" ? "text-ok" : d?.nivel === "Aceptable" ? "text-warn" : "text-bad";
   const angulo = d ? ((d.puntaje - 300) / 550) * 180 : 0;
+  const faltanCuotas = obligaciones?.some((o) => o.cuota <= 0) ?? false;
 
   return (
     <AppShell>
@@ -103,17 +131,118 @@ function MiHistorial() {
             />
           </label>
           <button
-            onClick={() => { setAviso(""); setObligaciones(extraerObligaciones(REPORTE_EJEMPLO)); }}
+            onClick={() => { setAviso(""); cargar(extraerObligaciones(REPORTE_EJEMPLO)); }}
             className="h-11 rounded-md bg-accent font-bold text-accent-foreground"
           >
             Ver reporte de ejemplo
+          </button>
+          <button
+            onClick={() => { setAviso(""); cargar([{ ...OBLIGACION_VACIA }]); }}
+            className="h-11 rounded-md border border-line font-bold text-ink"
+          >
+            Escribir mis deudas a mano
           </button>
         </div>
       </section>
 
       {aviso && <p className="rounded-lg border border-line bg-card p-4 text-sm">{aviso}</p>}
 
-      {d && obligaciones && obligaciones.length > 0 && (
+      {obligaciones && obligaciones.length > 0 && (
+        <section className="rounded-xl border border-line bg-card p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+              <PencilLine className="size-5 text-accent" /> Revisa tus deudas antes del diagnóstico
+            </h2>
+            <button onClick={agregar} className="inline-flex items-center gap-1.5 rounded-md border border-line px-3 py-2 text-xs font-bold">
+              <Plus className="size-4" /> Agregar deuda
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-ink-soft">
+            A veces los reportes traen números en columnas distintas. Corrige lo que no cuadre: el diagnóstico sale de lo que tú confirmes aquí.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {obligaciones.map((o, i) => (
+              <li key={i} className="rounded-lg border border-line bg-paper p-3 sm:p-4">
+                <div className="grid gap-3 sm:grid-cols-[1fr_130px]">
+                  <label className="text-[11px] font-semibold text-ink-soft">
+                    Entidad
+                    <input
+                      value={o.entidad}
+                      onChange={(e) => actualizar(i, "entidad", e.target.value)}
+                      placeholder="Ej: Bancolombia"
+                      className="mt-1 h-10 w-full rounded-md border border-line bg-card px-3 text-sm text-ink outline-none focus:border-accent"
+                    />
+                  </label>
+                  <label className="text-[11px] font-semibold text-ink-soft">
+                    Tipo
+                    <select
+                      value={o.tipo}
+                      onChange={(e) => actualizar(i, "tipo", e.target.value)}
+                      className="mt-1 h-10 w-full rounded-md border border-line bg-card px-2 text-sm text-ink outline-none focus:border-accent"
+                    >
+                      {["Consumo", "Tarjeta de crédito", "Microcrédito", "Vehículo", "Vivienda", "Otro"].map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+                  <label className="text-[11px] font-semibold text-ink-soft">
+                    Lo que debes ($)
+                    <input
+                      type="number"
+                      value={o.saldo || ""}
+                      onChange={(e) => actualizar(i, "saldo", e.target.value)}
+                      className="mt-1 h-10 w-full rounded-md border border-line bg-card px-3 font-mono text-sm text-ink outline-none focus:border-accent"
+                    />
+                  </label>
+                  <label className="text-[11px] font-semibold text-ink-soft">
+                    Cuota al mes ($)
+                    <input
+                      type="number"
+                      value={o.cuota || ""}
+                      onChange={(e) => actualizar(i, "cuota", e.target.value)}
+                      className={`mt-1 h-10 w-full rounded-md border bg-card px-3 font-mono text-sm text-ink outline-none focus:border-accent ${
+                        o.cuota <= 0 ? "border-warn" : "border-line"
+                      }`}
+                    />
+                    {o.cuota <= 0 && <span className="mt-1 block text-[10px] font-bold text-warn">Falta la cuota</span>}
+                  </label>
+                  <label className="text-[11px] font-semibold text-ink-soft">
+                    Días en mora
+                    <input
+                      type="number"
+                      value={o.diasMora || ""}
+                      onChange={(e) => actualizar(i, "diasMora", e.target.value)}
+                      className="mt-1 h-10 w-full rounded-md border border-line bg-card px-3 font-mono text-sm text-ink outline-none focus:border-accent"
+                    />
+                  </label>
+                  <button
+                    onClick={() => eliminar(i)}
+                    aria-label="Quitar esta deuda"
+                    className="mt-5 grid size-10 place-items-center self-start rounded-md border border-line text-bad hover:bg-bad/10"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {faltanCuotas && (
+            <p className="mt-3 rounded-lg bg-warn/10 p-3 text-xs font-semibold text-warn">
+              Hay deudas sin cuota mensual. Sin ese dato, el porcentaje de tu ingreso saldrá más bajo de lo real.
+            </p>
+          )}
+          <button
+            onClick={() => setConfirmado(true)}
+            className="mt-4 h-12 w-full rounded-md bg-accent font-bold text-accent-foreground sm:w-auto sm:px-8"
+          >
+            Confirmar y ver mi diagnóstico
+          </button>
+        </section>
+      )}
+
+      {d && obligaciones && (
         <>
           <section className="grid gap-4 md:grid-cols-[300px_1fr]">
             <article className="settle-in rounded-xl border border-line bg-card p-6 text-center">
@@ -144,7 +273,7 @@ function MiHistorial() {
                   {obligaciones.map((o, i) => (
                     <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-2">
                       <span className="min-w-0"><b>{o.entidad}</b> <span className="text-ink-soft">· {o.tipo}</span></span>
-                      <span className="font-mono text-xs">{formatoCOP(o.cuota)}/mes</span>
+                      <span className="font-mono text-xs">{o.cuota > 0 ? `${formatoCOP(o.cuota)}/mes` : "sin cuota"}</span>
                       <span className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase ${o.diasMora ? "bg-bad/15 text-bad" : "bg-ok/15 text-ok"}`}>
                         {o.diasMora ? `${o.diasMora} días en mora` : "Al día"}
                       </span>

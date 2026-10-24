@@ -10,3 +10,4 @@
 - [x] Crear sección Consulta en la app con búsqueda y tarjetas de personas.
 - [x] Usuario ejecuta cuentaclara-consulta-publica.sql en su base personal para crear la tabla.
 - [x] Verificar que Consulta lea los 3 registros de ejemplo de la base personal y que la búsqueda funcione.
+- [x] Hacer confiable el análisis: revisión editable de deudas antes del diagnóstico y sin cuotas inventadas.

@@ -31,12 +31,13 @@ export function extraerObligaciones(texto: string): Obligacion[] {
     const mora = linea.match(/(\d{1,3})\s*d[ií]as/i);
     const tipo = /tarjeta/i.test(linea) ? "Tarjeta de crédito" : /micro/i.test(linea) ? "Microcrédito" : /veh/i.test(linea) ? "Vehículo" : "Consumo";
     // Si el reporte no trae cuota, no la inventamos: queda en 0 y marcada para revisión.
-    const sinCuota = !montos[1];
+    const segundoMonto = montos[1];
+    const sinCuota = !segundoMonto;
     res.push({
       entidad,
       tipo,
-      saldo: num(montos[0]),
-      cuota: sinCuota ? 0 : num(montos[1]),
+      saldo: num(montos[0] ?? ""),
+      cuota: sinCuota ? 0 : num(segundoMonto ?? ""),
       diasMora: mora ? Number(mora[1]) : 0,
       cuotaEstimada: sinCuota,
     });

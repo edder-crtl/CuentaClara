@@ -21,8 +21,9 @@ describe("reglas financieras", () => {
     });
     const esperado = ((r.totalIntereses + r.comisionApertura) / 1_000_000) * (12 / 12);
     expect(r.costoTotalAnual).toBeCloseTo(esperado, 10);
-    // Con 12 meses debe quedar cerca del costo total del crédito (~24,5%).
-    expect(r.costoTotalAnual).toBeGreaterThan(0.2);
-    expect(r.costoTotalAnual).toBeLessThan(0.3);
+    // Con 12 meses el costo anual queda cerca del costo total del crédito (~14,5%:
+    // intereses sobre saldo decreciente + 1% de comisión).
+    expect(r.costoTotalAnual).toBeGreaterThan(0.13);
+    expect(r.costoTotalAnual).toBeLessThan(0.16);
   });
 });

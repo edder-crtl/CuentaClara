@@ -16,6 +16,8 @@ export interface Diagnostico {
   sinCuota: number;
   puntaje: number;
   nivel: "Excelente" | "Aceptable" | "En alerta";
+  /** Explicación de qué sube o baja el puntaje estimado. */
+  factores: string[];
   acciones: string[];
 }
 
@@ -53,11 +55,25 @@ export function diagnosticar(obligaciones: Obligacion[], ingreso: number): Diagn
   const sinCuota = obligaciones.filter((o) => o.cuota <= 0).length;
   const peorMora = Math.max(0, ...obligaciones.map((o) => o.diasMora));
 
-  let puntaje = 850;
-  puntaje -= Math.max(0, porcentajeIngreso - 0.3) * 400;
-  puntaje -= enMora * 40 + Math.min(peorMora, 120) * 1.2;
+  // Puntaje estimado propio de CUENTACLARA (escala 300–850). No es el puntaje oficial
+  // de Datacrédito ni TransUnion: es una guía educativa calculada con estos factores.
+  const castigoCarga = Math.max(0, porcentajeIngreso - 0.3) * 400;
+  const castigoMora = enMora * 40 + Math.min(peorMora, 120) * 1.2;
+  let puntaje = 850 - castigoCarga - castigoMora;
   puntaje = Math.round(Math.max(300, Math.min(850, puntaje)));
   const nivel = puntaje >= 750 ? "Excelente" : puntaje >= 650 ? "Aceptable" : "En alerta";
+
+  const factores: string[] = ["Partes de 850 puntos, el mejor escenario posible."];
+  if (castigoCarga > 0)
+    factores.push(
+      `Tus cuotas usan el ${Math.round(porcentajeIngreso * 100)}% de tu ingreso (lo sano es hasta 30%): −${Math.round(castigoCarga)} puntos.`,
+    );
+  else factores.push("Tus cuotas usan menos del 30% de tu ingreso: eso no te resta puntos.");
+  if (castigoMora > 0)
+    factores.push(
+      `Tienes ${enMora} deuda(s) en mora (la peor de ${peorMora} días): −${Math.round(castigoMora)} puntos.`,
+    );
+  else factores.push("No tienes deudas en mora: eso no te resta puntos.");
 
   const acciones: string[] = [];
   if (sinCuota > 0) acciones.push(`A ${sinCuota} deuda(s) les falta la cuota mensual: escríbela arriba para que el porcentaje de tu ingreso sea exacto.`);
@@ -68,7 +84,7 @@ export function diagnosticar(obligaciones: Obligacion[], ingreso: number): Diagn
   if (obligaciones.some((o) => o.tipo === "Tarjeta de crédito")) acciones.push("Paga el total de la tarjeta cada mes; pagar solo el mínimo es la forma más cara de financiarte.");
   if (acciones.length === 0) acciones.push("Vas muy bien. Mantén tus pagos puntuales y guarda un fondo de emergencia de 3 meses de gastos.");
 
-  return { totalDeuda, totalCuotas, porcentajeIngreso, enMora, sinCuota, puntaje, nivel, acciones };
+  return { totalDeuda, totalCuotas, porcentajeIngreso, enMora, sinCuota, puntaje, nivel, factores, acciones };
 }
 
 export const REPORTE_EJEMPLO = `Bancolombia Tarjeta de crédito $ 3.200.000 $ 280.000 al día

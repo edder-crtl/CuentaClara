@@ -254,7 +254,18 @@ function MiHistorial() {
               </svg>
               <p className={`-mt-10 font-display text-4xl font-bold ${color}`}>{d.puntaje}</p>
               <p className={`mt-1 font-bold ${color}`}>{d.nivel}</p>
-              <p className="mt-2 text-[11px] text-ink-soft">Escala 300–850. Es una estimación, no tu puntaje oficial.</p>
+              <p className="mt-2 text-[11px] text-ink-soft">
+                Escala 300–850. Es una estimación propia de CUENTACLARA con fines educativos: no es tu
+                puntaje oficial de Datacrédito ni de TransUnion.
+              </p>
+              <details className="mt-3 text-left">
+                <summary className="cursor-pointer text-xs font-bold text-accent">¿Cómo calculamos este número?</summary>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-ink-soft">
+                  {d.factores.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              </details>
             </article>
             <div className="grid gap-4 sm:grid-cols-3">
               {[

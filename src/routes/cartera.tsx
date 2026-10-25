@@ -7,7 +7,11 @@ import {
   clasificarCartera,
   diasMora,
   formatoCOP,
+  formatoPct,
+  interesMora,
   planRefinanciacion,
+  TASA_MORA_MENSUAL,
+  TASA_REFINANCIACION_MENSUAL,
   type BucketCartera,
 } from "@/lib/finanzas";
 
@@ -64,7 +68,7 @@ function Cartera() {
   const saldoVencido = buckets
     .filter((b) => b.bucket !== "Corriente")
     .reduce((acc, b) => acc + b.saldo + b.mora, 0);
-  const refi = planRefinanciacion(saldoVencido, 0.019, Math.max(saldoVencido / 12, 1));
+  const refi = planRefinanciacion(saldoVencido, TASA_REFINANCIACION_MENSUAL, Math.max(saldoVencido / 12, 1));
 
   return (
     <AppShell>
@@ -73,6 +77,11 @@ function Cartera() {
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Cartera por edades</h1>
       <p className="mt-2 text-sm text-ink-soft">
         Clasificación automática de cuotas pendientes y cálculo de intereses de mora.
+      </p>
+      <p className="mt-2 rounded-lg border border-line bg-card p-3 text-xs text-ink-soft">
+        La mora se calcula con una tasa estimada del {formatoPct(TASA_MORA_MENSUAL)} mensual
+        (1,5× una tasa ordinaria típica, el tope legal en Colombia). La tasa real depende de tu
+        contrato con cada entidad.
       </p>
       </header>
 
@@ -139,8 +148,8 @@ function Cartera() {
                         {new Date(`${c.fecha_vencimiento}T00:00:00`).toLocaleDateString("es-CO")}
                       </p>
                       <p className="font-mono text-[11px] text-ink-soft">
-                        {formatoCOP(Number(c.cuota))} · mora {formatoCOP(
-                          Number(c.cuota) * (0.028 / 30) * dias,
+                        {formatoCOP(Number(c.cuota))} · mora est. {formatoCOP(
+                          interesMora(Number(c.cuota), dias, TASA_MORA_MENSUAL),
                           false,
                         )}
                       </p>

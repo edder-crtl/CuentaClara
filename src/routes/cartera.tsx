@@ -78,6 +78,11 @@ function Cartera() {
       <p className="mt-2 text-sm text-ink-soft">
         Clasificación automática de cuotas pendientes y cálculo de intereses de mora.
       </p>
+      <p className="mt-2 rounded-lg border border-line bg-card p-3 text-xs text-ink-soft">
+        La mora se calcula con una tasa estimada del {formatoPct(TASA_MORA_MENSUAL)} mensual
+        (1,5× una tasa ordinaria típica, el tope legal en Colombia). La tasa real depende de tu
+        contrato con cada entidad.
+      </p>
       </header>
 
       {!user && (

@@ -7,7 +7,11 @@ import {
   clasificarCartera,
   diasMora,
   formatoCOP,
+  formatoPct,
+  interesMora,
   planRefinanciacion,
+  TASA_MORA_MENSUAL,
+  TASA_REFINANCIACION_MENSUAL,
   type BucketCartera,
 } from "@/lib/finanzas";
 

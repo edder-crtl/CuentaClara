@@ -233,7 +233,7 @@ export interface ResumenBucket {
 
 export function clasificarCartera(
   cuotas: CuotaVencida[],
-  tasaMoraMensual = 0.028,
+  tasaMoraMensual = TASA_MORA_MENSUAL,
   hoy = new Date(),
 ): ResumenBucket[] {
   const base: Record<BucketCartera, ResumenBucket> = {

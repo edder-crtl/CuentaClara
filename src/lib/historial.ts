@@ -84,7 +84,7 @@ export function diagnosticar(obligaciones: Obligacion[], ingreso: number): Diagn
   if (obligaciones.some((o) => o.tipo === "Tarjeta de crédito")) acciones.push("Paga el total de la tarjeta cada mes; pagar solo el mínimo es la forma más cara de financiarte.");
   if (acciones.length === 0) acciones.push("Vas muy bien. Mantén tus pagos puntuales y guarda un fondo de emergencia de 3 meses de gastos.");
 
-  return { totalDeuda, totalCuotas, porcentajeIngreso, enMora, sinCuota, puntaje, nivel, acciones };
+  return { totalDeuda, totalCuotas, porcentajeIngreso, enMora, sinCuota, puntaje, nivel, factores, acciones };
 }
 
 export const REPORTE_EJEMPLO = `Bancolombia Tarjeta de crédito $ 3.200.000 $ 280.000 al día

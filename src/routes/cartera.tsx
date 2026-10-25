@@ -68,7 +68,7 @@ function Cartera() {
   const saldoVencido = buckets
     .filter((b) => b.bucket !== "Corriente")
     .reduce((acc, b) => acc + b.saldo + b.mora, 0);
-  const refi = planRefinanciacion(saldoVencido, 0.019, Math.max(saldoVencido / 12, 1));
+  const refi = planRefinanciacion(saldoVencido, TASA_REFINANCIACION_MENSUAL, Math.max(saldoVencido / 12, 1));
 
   return (
     <AppShell>
@@ -143,8 +143,8 @@ function Cartera() {
                         {new Date(`${c.fecha_vencimiento}T00:00:00`).toLocaleDateString("es-CO")}
                       </p>
                       <p className="font-mono text-[11px] text-ink-soft">
-                        {formatoCOP(Number(c.cuota))} · mora {formatoCOP(
-                          Number(c.cuota) * (0.028 / 30) * dias,
+                        {formatoCOP(Number(c.cuota))} · mora est. {formatoCOP(
+                          interesMora(Number(c.cuota), dias, TASA_MORA_MENSUAL),
                           false,
                         )}
                       </p>

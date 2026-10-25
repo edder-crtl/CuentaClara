@@ -89,9 +89,10 @@ export function simular(entrada: EntradaSimulacion): ResultadoSimulacion {
   const totalIntereses = tabla.reduce((acc, f) => acc + f.interes, 0);
   const comisionApertura = monto * comisionPct;
   const tasaEfectivaAnual = Math.pow(1 + tasaMensual, 12) - 1;
+  // Costo anual aproximado: costo total (intereses + comisión) anualizado de forma simple.
   const costoTotalAnual =
     monto > 0 && plazo > 0
-      ? Math.pow(1 + (totalIntereses + comisionApertura) / monto, 12 / plazo) - 1
+      ? ((totalIntereses + comisionApertura) / monto) * (12 / plazo)
       : 0;
   const capacidadPago = Math.max(ingresos - gastos - deudaActual, 0);
   const relacionCuotaIngreso = ingresos > 0 ? cuotaMensual / ingresos : 1;
@@ -207,6 +208,15 @@ export function bucketPorDias(dias: number): BucketCartera {
   if (dias <= 60) return "60 días";
   return "90+ días";
 }
+
+/**
+ * Tasa de mora mensual estimada: 1,5× una tasa ordinaria típica de consumo (tope legal en Colombia).
+ * La tasa real depende del contrato de cada entidad; por eso se muestra como estimación.
+ */
+export const TASA_MORA_MENSUAL = 0.021;
+
+/** Tasa mensual estimada para reprogramar cartera vencida. */
+export const TASA_REFINANCIACION_MENSUAL = 0.019;
 
 /** Interés de mora simple diario sobre el valor de la cuota vencida. */
 export function interesMora(valorCuota: number, dias: number, tasaMoraMensual: number) {

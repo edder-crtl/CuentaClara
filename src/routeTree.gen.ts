@@ -15,6 +15,7 @@ import { Route as CarteraRouteImport } from './routes/cartera'
 import { Route as ConsejosRouteImport } from './routes/consejos'
 import { Route as ConsultaRouteImport } from './routes/consulta'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SolicitudesRouteImport } from './routes/solicitudes'
 import { Route as TasasRouteImport } from './routes/tasas'
 
@@ -48,6 +49,11 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SolicitudesRoute = SolicitudesRouteImport.update({
   id: '/solicitudes',
   path: '/solicitudes',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/consejos': typeof ConsejosRoute
   '/consulta': typeof ConsultaRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitudes': typeof SolicitudesRoute
   '/tasas': typeof TasasRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/consejos': typeof ConsejosRoute
   '/consulta': typeof ConsultaRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitudes': typeof SolicitudesRoute
   '/tasas': typeof TasasRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/consejos': typeof ConsejosRoute
   '/consulta': typeof ConsultaRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitudes': typeof SolicitudesRoute
   '/tasas': typeof TasasRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/consejos'
     | '/consulta'
     | '/perfil'
+    | '/reset-password'
     | '/solicitudes'
     | '/tasas'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/consejos'
     | '/consulta'
     | '/perfil'
+    | '/reset-password'
     | '/solicitudes'
     | '/tasas'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/consejos'
     | '/consulta'
     | '/perfil'
+    | '/reset-password'
     | '/solicitudes'
     | '/tasas'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ConsejosRoute: typeof ConsejosRoute
   ConsultaRoute: typeof ConsultaRoute
   PerfilRoute: typeof PerfilRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SolicitudesRoute: typeof SolicitudesRoute
   TasasRoute: typeof TasasRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/solicitudes': {
       id: '/solicitudes'
       path: '/solicitudes'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConsejosRoute: ConsejosRoute,
   ConsultaRoute: ConsultaRoute,
   PerfilRoute: PerfilRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SolicitudesRoute: SolicitudesRoute,
   TasasRoute: TasasRoute,
 }

@@ -8,7 +8,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [
     tanstackStart({ server: { entry: "server" } }),
-    nitro({ preset: "vercel" }),
+    nitro({ preset: process.env.NITRO_PRESET ?? "vercel" }),
     viteReact(),
     tailwindcss(),
     tsConfigPaths(),

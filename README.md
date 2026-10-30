@@ -1,59 +1,35 @@
-# CUENTACLARA — Simulador de crédito para pymes en Colombia
+# CUENTACLARA
 
-Actúa como un diseñador senior experto en desarrollo de aplicaciones web
+Simulador de crédito para pequeñas empresas en Colombia. La aplicación usa TanStack Start, React, Vite y Supabase.
 
-en Colombia, especializado en productos para pequeños negocios. Propuesta:
+## Desarrollo local
 
-El motor de cálculo y simulador financiero/credito es una aplicación web transaccional diseñada para evaluar la viabilidad de un préstamo o inversión en tiempo real. A diferencia de una calculadora web común que solo resuelve una ecuación simple, esta plataforma almacena datos de usuarios, productos financieros e historial de solicitudes, para luego ejecutar un procesamiento lógico complejo antes de emitir un resultado o tomar una decisión automatizada. 
-
-
-
-
-
-Procesamiento que realiza:
-
-Categorización de cartera por edades (cartera corriente, 30, 60, 90+ días).
-
-Cálculo de intereses de mora y recargos según normativas o configuraciones personalizadas.
-
-Generador automático de planes de refinanciación ajustando cuotas según la capacidad de pago del usuario.
-
-Flujos de notificación automática (reprogramación de mensajes según el estado del compromiso).
-
-
-
-
-Datos necesarios:
-
-Para funcionar correctamente, la aplicación requiere una base de datos relacional organizada en cuatro ejes principales:
-
-Usuarios y Perfiles Financieros: Guarda la información del solicitante, incluyendo sus ingresos mensuales, gastos fijos, historial de endeudamiento, ocupación y antigüedad laboral.
-
-Catálogo de Productos Financieros: Almacena las reglas de los préstamos disponibles (tasas de interés fijas o variables, plazos permitidos de 6 a 72 meses, montos mínimos/máximos y porcentajes de comisión por apertura).
-
-Expedientes de Solicitudes: Mantiene el registro de cada simulación realizada, con sus fechas, estados (En Borrador, Aprobada, Rechazada, En Revisión) y la opción seleccionada por el usuario.
-
-Tablas de Amortización Generadas: Guarda el desglose detallado cuota por cuota de las simulaciones aprobadas o guardadas por el usuario.
-
-This project was built with [](https://.dev).
-
-**Live app**: https://grow-your-loan..app
-
-## Build with 
-
-Continue developing this project in the [ editor](https://.dev/projects/ab8e9d27-c6e6-4973-a49c-2b2176021151).
-
-- **Ship faster**: describe what you want to build and  handles the code.
-- **Stay in sync**: every change made in  is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into , ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requisitos: Bun y las variables de entorno de Supabase.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
 ```
+
+## Variables de entorno
+
+Configura estas variables en un archivo `.env` local y en el entorno de despliegue:
+
+| Variable | Uso |
+| --- | --- |
+| `VITE_SUPABASE_URL` | URL del proyecto Supabase para el cliente web |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clave publicable para el cliente web |
+| `SUPABASE_URL` | URL del proyecto Supabase en el servidor |
+| `SUPABASE_PUBLISHABLE_KEY` | Clave publicable para el servidor |
+
+Las claves `VITE_*` se incluyen en el navegador; solo deben contener valores publicables. Nunca expongas una clave `service_role` en el cliente ni la incluyas en una variable `VITE_*`.
+
+## Despliegue en Vercel
+
+1. Importa el repositorio de GitHub en Vercel y selecciona la carpeta `grow-your-loan` como raíz del proyecto si el repositorio contiene otras carpetas.
+2. Usa `bun install` como comando de instalación y `bun run build` como comando de compilación. La configuración de Nitro genera el despliegue de servidor para Vercel.
+3. Añade las cuatro variables de Supabase anteriores en la configuración del proyecto de Vercel para Preview y Production.
+4. Después del primer despliegue, agrega el dominio `*.vercel.app` asignado por Vercel a las URL permitidas de Supabase Authentication. Configura la URL de producción del sitio y las URL de redirección de autenticación.
+5. Prueba el registro, el inicio de sesión, la recuperación de contraseña y las rutas protegidas con el dominio de Vercel.
+
+La autenticación y la base de datos continúan alojadas en el proyecto de Supabase existente.

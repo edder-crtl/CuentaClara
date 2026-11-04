@@ -4,14 +4,16 @@ import { FileUp, ShieldCheck, Sparkles, Lock, Trash2, Plus, PencilLine } from "l
 import { AppShell } from "@/components/AppShell";
 import { formatoCOP } from "@/lib/finanzas";
 import { diagnosticar, extraerObligaciones, REPORTE_EJEMPLO, type Obligacion } from "@/lib/historial";
+import { solicitarRecomendaciones } from "@/lib/recomendaciones.server";
+import type { ResultadoRecomendaciones } from "@/lib/recomendaciones";
 
 export const Route = createFileRoute("/consulta")({
   head: () => ({
     meta: [
       { title: "Mi historial — CUENTACLARA" },
-      { name: "description", content: "Sube tu reporte gratuito de Midatacrédito o tu extracto y recibe tu diagnóstico financiero privado." },
+      { name: "description", content: "Revisa tu reporte financiero y recibe recomendaciones claras para organizar tus deudas." },
       { property: "og:title", content: "Mi historial — CUENTACLARA" },
-      { property: "og:description", content: "Entiende tu reporte de crédito en segundos, sin que tus datos salgan de tu celular." },
+      { property: "og:description", content: "Entiende tu reporte de crédito y solicita recomendaciones financieras." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -45,17 +47,30 @@ function MiHistorial() {
   const [cargando, setCargando] = useState(false);
   const [aviso, setAviso] = useState("");
   const [arrastrando, setArrastrando] = useState(false);
+  const [textoReporte, setTextoReporte] = useState("");
+  const [autorizaEnvio, setAutorizaEnvio] = useState(false);
+  const [cargandoIA, setCargandoIA] = useState(false);
+  const [avisoIA, setAvisoIA] = useState("");
+  const [resultadoIA, setResultadoIA] = useState<ResultadoRecomendaciones | null>(null);
 
   const cargar = (lista: Obligacion[]) => {
     setObligaciones(lista);
     setConfirmado(false);
+    setResultadoIA(null);
+    setAvisoIA("");
+    setAutorizaEnvio(false);
   };
 
   const procesar = async (file: File) => {
     setCargando(true);
     setAviso("");
+    setTextoReporte("");
+    setResultadoIA(null);
+    setAvisoIA("");
+    setAutorizaEnvio(false);
     try {
       const texto = file.type === "application/pdf" ? await leerPdf(file) : await file.text();
+      setTextoReporte(texto);
       const o = extraerObligaciones(texto);
       if (o.length === 0) setAviso("No encontramos deudas con montos en ese archivo. Prueba con el reporte de ejemplo o agrega tus deudas a mano.");
       cargar(o);
@@ -67,6 +82,9 @@ function MiHistorial() {
   };
 
   const actualizar = (i: number, campo: keyof Obligacion, valor: string) => {
+    setResultadoIA(null);
+    setAvisoIA("");
+    setAutorizaEnvio(false);
     setObligaciones((prev) =>
       prev
         ? prev.map((o, j) =>
@@ -82,8 +100,49 @@ function MiHistorial() {
     );
   };
 
-  const eliminar = (i: number) => setObligaciones((prev) => (prev ? prev.filter((_, j) => j !== i) : prev));
-  const agregar = () => setObligaciones((prev) => [...(prev ?? []), { ...OBLIGACION_VACIA }]);
+  const eliminar = (i: number) => {
+    setResultadoIA(null);
+    setAvisoIA("");
+    setAutorizaEnvio(false);
+    setObligaciones((prev) => (prev ? prev.filter((_, j) => j !== i) : prev));
+  };
+  const agregar = () => {
+    setResultadoIA(null);
+    setAvisoIA("");
+    setAutorizaEnvio(false);
+    setObligaciones((prev) => [...(prev ?? []), { ...OBLIGACION_VACIA }]);
+  };
+
+  const recomendarConIA = async () => {
+    if (!obligaciones || !autorizaEnvio) return;
+    setCargandoIA(true);
+    setAvisoIA("");
+    setResultadoIA(null);
+    try {
+      const respuesta = await solicitarRecomendaciones({
+        data: {
+          textoReporte,
+          ingresoMensual: ingreso,
+          obligaciones: obligaciones.map(({ entidad, tipo, saldo, cuota, diasMora }) => ({
+            entidad,
+            tipo,
+            saldo,
+            cuota,
+            diasMora,
+          })),
+        },
+      });
+      if (!respuesta.ok) {
+        setAvisoIA(respuesta.error);
+        return;
+      }
+      setResultadoIA(respuesta.resultado);
+    } catch (error) {
+      setAvisoIA(error instanceof Error ? error.message : "No fue posible generar recomendaciones. Inténtalo de nuevo.");
+    } finally {
+      setCargandoIA(false);
+    }
+  };
 
   const d = confirmado && obligaciones && obligaciones.length > 0 ? diagnosticar(obligaciones, ingreso) : null;
   const color = d?.nivel === "Excelente" ? "text-ok" : d?.nivel === "Aceptable" ? "text-warn" : "text-bad";
@@ -102,7 +161,7 @@ function MiHistorial() {
           decimos cómo estás y qué hacer para mejorar.
         </p>
         <p className="mt-4 inline-flex items-center gap-2 font-mono text-xs text-paper/70">
-          <Lock className="size-3.5" /> Tu archivo se lee solo en tu dispositivo. No lo guardamos.
+          <Lock className="size-3.5" /> Tu archivo se procesa en tu dispositivo; solo se comparte si solicitas el análisis con IA.
         </p>
       </header>
 
@@ -117,7 +176,7 @@ function MiHistorial() {
         >
           <FileUp className="size-9 text-accent" />
           <span className="font-display font-bold">{cargando ? "Leyendo tu archivo…" : "Arrastra tu PDF o toca para elegirlo"}</span>
-          <span className="text-xs text-ink-soft">Reporte de Midatacrédito, TransUnion o extracto bancario</span>
+          <span className="text-xs text-ink-soft">Reporte de Midatacrédito, TransUnion o extracto bancario en PDF con texto o TXT</span>
           <input type="file" accept=".pdf,.txt" className="sr-only" onChange={(e) => e.target.files?.[0] && procesar(e.target.files[0])} />
         </label>
         <div className="flex flex-col gap-3 rounded-xl border border-line bg-card p-5">
@@ -126,18 +185,23 @@ function MiHistorial() {
             <input
               type="number"
               value={ingreso}
-              onChange={(e) => setIngreso(Number(e.target.value))}
+              onChange={(e) => {
+                setIngreso(Number(e.target.value));
+                setResultadoIA(null);
+                setAvisoIA("");
+                setAutorizaEnvio(false);
+              }}
               className="mt-1.5 h-11 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm outline-none focus:border-accent"
             />
           </label>
           <button
-            onClick={() => { setAviso(""); cargar(extraerObligaciones(REPORTE_EJEMPLO)); }}
+            onClick={() => { setAviso(""); setTextoReporte(REPORTE_EJEMPLO); cargar(extraerObligaciones(REPORTE_EJEMPLO)); }}
             className="h-11 rounded-md bg-accent font-bold text-accent-foreground"
           >
             Ver reporte de ejemplo
           </button>
           <button
-            onClick={() => { setAviso(""); cargar([{ ...OBLIGACION_VACIA }]); }}
+            onClick={() => { setAviso(""); setTextoReporte(""); cargar([{ ...OBLIGACION_VACIA }]); }}
             className="h-11 rounded-md border border-line font-bold text-ink"
           >
             Escribir mis deudas a mano
@@ -234,7 +298,7 @@ function MiHistorial() {
             </p>
           )}
           <button
-            onClick={() => setConfirmado(true)}
+            onClick={() => { setConfirmado(true); setResultadoIA(null); }}
             className="mt-4 h-12 w-full rounded-md bg-accent font-bold text-accent-foreground sm:w-auto sm:px-8"
           >
             Confirmar y ver mi diagnóstico
@@ -306,6 +370,66 @@ function MiHistorial() {
               ))}
             </ol>
             <Link to="/" className="mt-5 inline-block font-bold text-accent">Simular un crédito con estos datos →</Link>
+          </section>
+
+          <section className="rounded-xl border border-line bg-card p-6">
+            <h2 className="font-display text-lg font-bold">Recomendaciones personalizadas con IA</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              Recibe orientación basada en las deudas que confirmaste{textoReporte ? " y el texto de tu documento" : ""}.
+              {textoReporte.length > 40_000 && " El documento supera el límite de texto para este análisis; sube una versión más corta."}
+            </p>
+            <label className="mt-4 flex items-start gap-3 text-sm leading-relaxed">
+              <input
+                type="checkbox"
+                checked={autorizaEnvio}
+                onChange={(event) => setAutorizaEnvio(event.target.checked)}
+                className="mt-1 size-4 accent-accent"
+              />
+              <span>
+                Autorizo enviar {textoReporte ? "el texto extraído de mi documento y " : ""}
+                mis datos financieros confirmados a xAI (Grok) a través del servidor de CUENTACLARA para generar estas recomendaciones.
+              </span>
+            </label>
+            <button
+              onClick={recomendarConIA}
+              disabled={!autorizaEnvio || cargandoIA || textoReporte.length > 40_000}
+              className="mt-4 h-11 rounded-md bg-accent px-5 font-bold text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cargandoIA ? "Preparando recomendaciones…" : "Solicitar recomendaciones"}
+            </button>
+            <p className="mt-3 text-xs leading-relaxed text-ink-soft">
+              El análisis requiere conexión y una clave de API configurada por CUENTACLARA. Los PDF escaneados como imagen no se pueden leer.
+              No incluyas información que no quieras compartir con el proveedor de IA.
+            </p>
+            {avisoIA && <p role="alert" className="mt-4 rounded-lg border border-bad/30 bg-bad/10 p-3 text-sm text-bad">{avisoIA}</p>}
+            {resultadoIA && (
+              <div aria-live="polite" className="mt-5 space-y-5 border-t border-line pt-5">
+                <p className="text-sm leading-relaxed">{resultadoIA.resumen}</p>
+                {resultadoIA.alertas.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-bold">Aspectos para revisar</h3>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed">
+                      {resultadoIA.alertas.map((alerta, i) => <li key={i}>{alerta}</li>)}
+                    </ul>
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-display text-sm font-bold">Pasos recomendados</h3>
+                  <ol className="mt-3 space-y-4">
+                    {resultadoIA.recomendaciones.map((recomendacion, i) => (
+                      <li key={i} className="border-l-2 border-accent pl-4">
+                        <h4 className="font-semibold">{recomendacion.titulo}</h4>
+                        <p className="mt-1 text-sm leading-relaxed text-ink-soft">{recomendacion.analisis}</p>
+                        <p className="mt-2 text-sm leading-relaxed">{recomendacion.accion}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  Orientación educativa generada con IA; verifica la información con tus entidades financieras. No es asesoría profesional ni una decisión crediticia.
+                </p>
+              </div>
+            )}
           </section>
         </>
       )}

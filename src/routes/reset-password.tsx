@@ -83,22 +83,22 @@ function ResetPassword() {
         {esRecuperacion && (
           <form onSubmit={guardar} className="mt-4 space-y-3">
             <label className="block">
-              <span className="text-xs font-semibold">Contraseña nueva</span>
+              <span className="text-xs font-semibold">Contraseña nueva (mínimo 12 caracteres)</span>
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 h-11 w-full rounded-md border border-line bg-paper px-3 text-sm outline-none focus:border-accent"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold">Repite la contraseña</span>
+              <span className="text-xs font-semibold">Repite la contraseña nueva</span>
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={confirmacion}
                 onChange={(e) => setConfirmacion(e.target.value)}
                 className="mt-1.5 h-11 w-full rounded-md border border-line bg-paper px-3 text-sm outline-none focus:border-accent"

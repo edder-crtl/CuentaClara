@@ -13,7 +13,7 @@ bun run dev
 
 ## Variables de entorno
 
-Configura estas variables en un archivo `.env` local y en el entorno de despliegue:
+Configura las variables de Supabase en un archivo `.env.local` local y en el entorno de despliegue. Puedes copiar `.env.example` para desarrollo; reemplaza sus valores de ejemplo por los que muestra `supabase status` al iniciar Supabase local.
 
 | Variable | Uso |
 | --- | --- |
@@ -26,6 +26,54 @@ Configura estas variables en un archivo `.env` local y en el entorno de desplieg
 | `GROK_MODEL` | Identificador del modelo; por defecto, `grok-4.7` |
 
 Las claves `VITE_*` se incluyen en el navegador; solo deben contener valores publicables. Nunca expongas una clave `service_role` en el cliente ni la incluyas en una variable `VITE_*`.
+
+## Autenticación y usuarios
+
+La aplicación usa Supabase Auth: las cuentas se guardan en el esquema protegido `auth.users`, aparte de los datos de la aplicación. El perfil complementario está en `public.profiles`; las políticas RLS restringen cada fila al usuario cuyo ID coincide con `auth.uid()`. El rol se guarda por separado en `public.user_roles`: el registro público siempre crea usuarios `user`, cada cuenta puede consultar su propio rol y solo una operación administrativa puede cambiarlo. El cliente de navegador y el servidor deben apuntar al mismo proyecto de Supabase. La clave `SUPABASE_SERVICE_ROLE_KEY` es solo para el servidor y nunca debe tener el prefijo `VITE_`.
+
+### Crear una cuenta admin y una user
+
+Las cuentas se crean en Supabase; no pongas correos ni contraseñas reales en el código o en Git. En el proyecto correcto, abre **Authentication → Users → Add user → Create new user** y crea las dos cuentas con correos y contraseñas seguras (de al menos 12 caracteres). Confirma los correos si el proyecto lo requiere. El trigger crea automáticamente un perfil y asigna el rol `user` a cada cuenta nueva.
+
+Para dar permisos de administrador solo a la primera cuenta, abre **SQL Editor**, cambia el correo de ejemplo y ejecuta:
+
+```sql
+UPDATE public.user_roles
+SET role = 'admin'
+WHERE user_id = (
+  SELECT id FROM auth.users WHERE email = 'admin@tudominio.com'
+);
+```
+
+La consulta debe afectar una fila. La segunda cuenta conserva el rol `user`; puedes comprobar ambos roles así:
+
+```sql
+SELECT u.email, r.role
+FROM auth.users AS u
+JOIN public.user_roles AS r ON r.user_id = u.id
+WHERE u.email IN ('admin@tudominio.com', 'usuario@tudominio.com');
+```
+
+Aplica las migraciones al mismo proyecto al que apunta la app (`supabase db push` para el proyecto enlazado, o `supabase migration up` en local) antes de crear cuentas. El rol establece una base segura para diferenciar cuentas; la app todavía no incluye un panel ni acciones administrativas específicas. Antes de añadirlos, cada acción de admin también debe verificarse en el servidor o con políticas RLS; ocultar botones en el navegador no protege datos.
+
+El inicio de sesión con Google ya está integrado en `/auth`. Para activarlo:
+
+1. Crea credenciales OAuth de tipo aplicación web en Google Cloud Console.
+2. En Supabase, abre **Authentication → Providers → Google**, actívalo y registra allí el Client ID y el Client Secret. No los agregues al repositorio ni los compartas en el chat.
+3. Copia en Google la URL de callback que muestra esa pantalla de Supabase.
+4. En **Authentication → URL Configuration** de Supabase, configura la URL de tu aplicación y agrega las URL de desarrollo y producción a la lista de redirecciones permitidas.
+5. En la configuración de autenticación de Supabase, exige contraseñas de al menos 12 caracteres, activa la protección contra contraseñas filtradas si está disponible y limita los intentos de autenticación.
+
+### Usuario de prueba local
+
+El usuario de prueba está limitado deliberadamente a un Supabase local; el script rechaza direcciones de proyectos remotos y entornos de producción. No uses estas credenciales en producción.
+
+1. Inicia el Supabase local con `supabase start`.
+2. Copia `.env.example` a `.env.local` y reemplaza las claves de ejemplo por la URL, la clave publicable y la clave `service_role` que muestra `supabase status`.
+3. Conserva las credenciales de prueba de `.env.example` o cámbialas en `.env.local`. Ese archivo está excluido de Git.
+4. Ejecuta `bun run seed:test-user`. Se creará una cuenta confirmada por correo; el trigger de la base crea su perfil automáticamente.
+
+El script requiere `ALLOW_TEST_USER_SEED=true` y solo acepta `localhost`, `127.0.0.1` o `::1`; no crea cuentas en el Supabase alojado.
 
 Las recomendaciones usan la API de Responses de xAI y el modelo `grok-4.7`. En desarrollo local, configura `XAI_API_KEY` con tu clave de xAI y `GROK_MODEL=grok-4.7`; puedes cambiar el identificador por otro modelo disponible en tu cuenta. En Docker Compose o en el despliegue, configura ambas variables en el servidor. La clave se usa solo en el servidor: no le agregues el prefijo `VITE_`. La función no envía datos a xAI hasta que la persona marca la autorización y solicita el análisis. En ese momento se envían el texto extraído del documento y las deudas confirmadas. Los PDF escaneados como imagen no tienen OCR.
 
@@ -45,6 +93,6 @@ La aplicación queda disponible en `http://localhost:3000` (o en el puerto defin
 2. Usa `bun install` como comando de instalación y `bun run build` como comando de compilación. La configuración de Nitro genera el despliegue de servidor para Vercel.
 3. Añade las variables de Supabase necesarias y `XAI_API_KEY` y `GROK_MODEL` en la configuración del proyecto de Vercel para Preview y Production. Mantén `SUPABASE_SERVICE_ROLE_KEY` y `XAI_API_KEY` como variables secretas del servidor.
 4. Después del primer despliegue, agrega el dominio `*.vercel.app` asignado por Vercel a las URL permitidas de Supabase Authentication. Configura la URL de producción del sitio y las URL de redirección de autenticación.
-5. Prueba el registro, el inicio de sesión, la recuperación de contraseña y las rutas protegidas con el dominio de Vercel.
+5. Configura Google OAuth en Supabase con las URL de producción y prueba el registro, el inicio de sesión y la recuperación de contraseña con el dominio de Vercel.
 
-La autenticación y la base de datos continúan alojadas en el proyecto de Supabase existente.
+La autenticación y la base de datos continúan alojadas en el proyecto de Supabase configurado mediante variables de entorno.

@@ -151,6 +151,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          role: "admin" | "user"
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role?: "admin" | "user"
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: "admin" | "user"
+          user_id?: string
+        }
+        Relationships: []
+      }
       solicitudes: {
         Row: {
           comision_apertura: number

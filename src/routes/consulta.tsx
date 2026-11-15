@@ -184,9 +184,13 @@ function MiHistorial() {
             ¿Cuánto te entra al mes?
             <input
               type="number"
-              value={ingreso}
+              value={ingreso === 0 ? "" : ingreso}
               onChange={(e) => {
-                setIngreso(Number(e.target.value));
+                if (e.target.value === "") {
+                  setIngreso(0);
+                } else {
+                  setIngreso(Number(e.target.value));
+                }
                 setResultadoIA(null);
                 setAvisoIA("");
                 setAutorizaEnvio(false);

@@ -172,11 +172,13 @@ function Auth() {
           </label>
           {modo !== "recuperar" && (
             <label className="block">
-              <span className="text-xs font-semibold">Contraseña</span>
+              <span className="text-xs font-semibold">
+                {modo === "registrar" ? "Contraseña (mínimo 12 caracteres)" : "Contraseña"}
+              </span>
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={modo === "registrar" ? 12 : 6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 h-11 w-full rounded-md border border-line bg-paper px-3 text-sm outline-none focus:border-accent"

@@ -368,6 +368,8 @@ function Campo({
   prefijo?: string;
   sufijo?: string;
 }) {
+  const valorVisible = valor === 0 ? "" : valor;
+
   return (
     <label className="block">
       <span className="text-xs font-semibold">{etiqueta}</span>
@@ -375,15 +377,19 @@ function Campo({
         {prefijo && <span className="font-mono text-sm text-ink-soft">{prefijo}</span>}
         <input
           type="number"
-          value={valor}
+          value={valorVisible}
           min={min}
           max={max}
           onChange={(e) => {
+            if (e.target.value === "") {
+              onChange(0);
+              return;
+            }
             const v = Number(e.target.value);
             onChange(Number.isFinite(v) ? v : 0);
           }}
           onBlur={(e) => {
-            let v = Number(e.target.value) || 0;
+            let v = e.target.value === "" ? 0 : Number(e.target.value) || 0;
             if (min !== undefined) v = Math.max(v, min);
             if (max !== undefined) v = Math.min(v, max);
             onChange(v);

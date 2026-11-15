@@ -179,13 +179,21 @@ function Numero({
   valor: number;
   onChange: (v: number) => void;
 }) {
+  const valorVisible = valor === 0 ? "" : valor;
+
   return (
     <label className="block">
       <span className="text-xs font-semibold">{etiqueta}</span>
       <input
         type="number"
-        value={valor}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        value={valorVisible}
+        onChange={(e) => {
+          if (e.target.value === "") {
+            onChange(0);
+            return;
+          }
+          onChange(Number(e.target.value) || 0);
+        }}
         className="mt-1.5 h-11 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm font-bold outline-none focus:border-accent"
       />
     </label>

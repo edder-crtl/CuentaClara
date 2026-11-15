@@ -1,5 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Calculator, CircleUserRound, Files, Landmark, Lightbulb, LogIn, PanelLeftClose, PanelLeftOpen, Search, WalletCards } from "lucide-react";
+import {
+  Calculator,
+  CircleUserRound,
+  Files,
+  Landmark,
+  Lightbulb,
+  LogIn,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  TrendingUp,
+  WalletCards,
+} from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { useDrawIn } from "@/hooks/useDrawIn";
 import { supabase } from "@/lib/supabase";
@@ -29,7 +41,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className={`hidden shrink-0 border-r border-line bg-card md:sticky md:top-0 md:flex md:h-screen md:flex-col ${compacta ? "w-20" : "w-64"}`}>
         <div className="flex h-20 items-center justify-between border-b border-line px-5">
           <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="CUENTACLARA, inicio">
-            <div className="grid size-9 shrink-0 place-items-center rounded-md bg-ink font-display text-sm font-bold text-paper">$</div>
+            <div className="grid size-9 shrink-0 place-items-center rounded-md bg-ink text-accent-2">
+              <TrendingUp className="size-5" aria-hidden="true" />
+            </div>
             {!compacta && <span className="truncate font-display text-sm font-bold">CUENTA<span className="text-accent">CLARA</span></span>}
           </Link>
           {!compacta && (
@@ -75,7 +89,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="min-w-0 flex-1 pb-24 md:pb-10">
         <header className="grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-line bg-card px-4 md:hidden">
           <Link to="/" className="flex min-w-0 items-center gap-2">
-            <div className="grid size-8 shrink-0 place-items-center rounded-md bg-ink font-display text-xs font-bold text-paper">$</div>
+            <div className="grid size-8 shrink-0 place-items-center rounded-md bg-ink text-accent-2">
+              <TrendingUp className="size-4" aria-hidden="true" />
+            </div>
             <span className="truncate font-display text-sm font-bold">CUENTA<span className="text-accent">CLARA</span></span>
           </Link>
           {user ? (

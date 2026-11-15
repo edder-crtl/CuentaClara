@@ -4,7 +4,7 @@ import { FileUp, ShieldCheck, Sparkles, Lock, Trash2, Plus, PencilLine } from "l
 import { AppShell } from "@/components/AppShell";
 import { formatoCOP } from "@/lib/finanzas";
 import { diagnosticar, extraerObligaciones, REPORTE_EJEMPLO, type Obligacion } from "@/lib/historial";
-import { solicitarRecomendaciones } from "@/lib/recomendaciones.server";
+import { solicitarRecomendaciones } from "@/lib/recomendaciones.functions";
 import type { ResultadoRecomendaciones } from "@/lib/recomendaciones";
 
 export const Route = createFileRoute("/consulta")({

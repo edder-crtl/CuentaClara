@@ -27,6 +27,25 @@ Configura las variables de Supabase en un archivo `.env.local` local y en el ent
 
 Las claves `VITE_*` se incluyen en el navegador; solo deben contener valores publicables. Nunca expongas una clave `service_role` en el cliente ni la incluyas en una variable `VITE_*`.
 
+### Conectar un proyecto Supabase nuevo
+
+La configuración local de Supabase no está vinculada a un proyecto remoto específico. Para conectar otro proyecto:
+
+1. Crea el proyecto en Supabase y, en **Project Settings → API**, copia el **Project URL**, la clave **publishable** (`sb_publishable_...`) y la clave **secret** (`sb_secret_...`) para el servidor. No compartas la clave secret ni la guardes en Git.
+2. En `.env.local`, configura `VITE_SUPABASE_URL` y `SUPABASE_URL` con el Project URL; configura `VITE_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_PUBLISHABLE_KEY` con la clave publicable. Configura `SUPABASE_SERVICE_ROLE_KEY` con la clave secret solo si vas a usar funciones de administración del servidor.
+3. En la terminal, inicia sesión y enlaza las migraciones al Project ID que aparece en el URL del proyecto:
+
+   ```sh
+   supabase login
+   supabase link --project-ref <project-id-nuevo>
+   supabase db push
+   ```
+
+4. En **Authentication → URL Configuration**, configura la URL de la app y sus redirecciones. En **Authentication → Providers**, habilita los métodos de inicio de sesión que vayas a ofrecer.
+5. Si el proyecto anterior tenía usuarios o datos que necesitas conservar, expórtalos e impórtalos por separado; cambiar las variables conecta la app al proyecto nuevo, pero no migra datos.
+
+La app ya no selecciona el proyecto remoto anterior desde `supabase/config.toml`. Desconectarlo no elimina ni modifica ese proyecto ni sus datos.
+
 ## Autenticación y usuarios
 
 La aplicación usa Supabase Auth: las cuentas se guardan en el esquema protegido `auth.users`, aparte de los datos de la aplicación. El perfil complementario está en `public.profiles`; las políticas RLS restringen cada fila al usuario cuyo ID coincide con `auth.uid()`. El rol se guarda por separado en `public.user_roles`: el registro público siempre crea usuarios `user`, cada cuenta puede consultar su propio rol y solo una operación administrativa puede cambiarlo. El cliente de navegador y el servidor deben apuntar al mismo proyecto de Supabase. La clave `SUPABASE_SERVICE_ROLE_KEY` es solo para el servidor y nunca debe tener el prefijo `VITE_`.

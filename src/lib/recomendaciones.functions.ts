@@ -49,7 +49,7 @@ No inventes tasas, fechas, condiciones de entidades ni derechos legales. No prom
 Devuelve de 2 a 5 recomendaciones priorizadas. Si hay mora, explica que conviene verificar el saldo y contactar directamente a la entidad antes de pagar. Si no hay datos suficientes, indícalo y pide confirmar lo necesario.
 Devuelve solo el objeto que cumple el esquema solicitado.`;
 
-const xaiResponseSchema = z.object({
+const openRouterResponseSchema = z.object({
   output: z
     .array(
       z.object({
@@ -65,20 +65,20 @@ const xaiResponseSchema = z.object({
 export const solicitarRecomendaciones = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => solicitudSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.XAI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return {
         ok: false,
-        error: "Falta configurar XAI_API_KEY en las variables de entorno del servidor.",
+        error: "Falta configurar OPENROUTER_API_KEY en las variables de entorno del servidor.",
       };
     }
 
     const obligaciones: Obligacion[] = data.obligaciones;
     const diagnostico = diagnosticar(obligaciones, data.ingresoMensual);
-    const modelo = process.env.GROK_MODEL?.trim() || "grok-4.7";
+    const modelo = process.env.OPENROUTER_MODEL?.trim() || "openai/gpt-oss-120b";
     let response: Response;
     try {
-      response = await fetch("https://api.x.ai/v1/responses", {
+      response = await fetch("https://openrouter.ai/api/v1/responses", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -130,7 +130,9 @@ export const solicitarRecomendaciones = createServerFn({ method: "POST" })
     }
 
     if (!response.ok) {
-      console.error(`[xAI] La solicitud de recomendaciones falló con HTTP ${response.status}.`);
+      console.error(
+        `[OpenRouter] La solicitud de recomendaciones falló con HTTP ${response.status}.`,
+      );
       return {
         ok: false,
         error: "No fue posible generar recomendaciones. Inténtalo de nuevo más tarde.",
@@ -144,7 +146,7 @@ export const solicitarRecomendaciones = createServerFn({ method: "POST" })
       return { ok: false, error: "El servicio de recomendaciones devolvió una respuesta inválida." };
     }
 
-    const payload = xaiResponseSchema.safeParse(responseBody);
+    const payload = openRouterResponseSchema.safeParse(responseBody);
     if (!payload.success) {
       return { ok: false, error: "El servicio de recomendaciones devolvió una respuesta inválida." };
     }

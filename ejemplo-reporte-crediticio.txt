@@ -1,0 +1,10 @@
+REPORTE DE OBLIGACIONES - EJEMPLO FICTICIO
+Fecha de corte: 16 de noviembre de 2026
+Este documento contiene datos inventados y sirve solo para probar CUENTACLARA.
+
+Banco Andino Tarjeta de credito $ 3.200.000 $ 280.000 cuota mensual al dia
+Financiera del Norte Credito de consumo $ 12.500.000 $ 620.000 cuota mensual al dia
+Cooperativa Horizonte Microcredito $ 2.100.000 $ 190.000 cuota mensual en mora 35 dias
+Banco del Parque Credito de vehiculo $ 8.400.000 cuota mensual no informada al dia
+
+Las cuotas y saldos son ficticios. Confirma los datos antes de usarlos en cualquier analisis.

@@ -391,7 +391,7 @@ function MiHistorial() {
               />
               <span>
                 Autorizo enviar {textoReporte ? "el texto extraído de mi documento y " : ""}
-                mis datos financieros confirmados a xAI (Grok) a través del servidor de CUENTACLARA para generar estas recomendaciones.
+                mis datos financieros confirmados a OpenRouter para generar estas recomendaciones.
               </span>
             </label>
             <button

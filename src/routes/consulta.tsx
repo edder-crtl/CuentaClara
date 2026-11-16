@@ -391,7 +391,7 @@ function MiHistorial() {
               />
               <span>
                 Autorizo enviar {textoReporte ? "el texto extraído de mi documento y " : ""}
-                mis datos financieros confirmados a OpenRouter para generar estas recomendaciones.
+                mis datos financieros confirmados a Groq para generar estas recomendaciones.
               </span>
             </label>
             <button

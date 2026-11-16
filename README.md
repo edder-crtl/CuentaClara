@@ -22,8 +22,8 @@ Configura las variables de Supabase en un archivo `.env.local` local y en el ent
 | `SUPABASE_URL` | URL del proyecto Supabase en el servidor |
 | `SUPABASE_PUBLISHABLE_KEY` | Clave publicable para el servidor |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta para operaciones administrativas del servidor |
-| `OPENROUTER_API_KEY` | Clave secreta de OpenRouter para generar recomendaciones |
-| `OPENROUTER_MODEL` | Identificador del modelo; por defecto, `openai/gpt-oss-120b` |
+| `GROQ_API_KEY` | Clave secreta de Groq para generar recomendaciones |
+| `GROQ_MODEL` | Identificador del modelo; por defecto, `openai/gpt-oss-120b` |
 
 Las claves `VITE_*` se incluyen en el navegador; solo deben contener valores publicables. Nunca expongas una clave `service_role` en el cliente ni la incluyas en una variable `VITE_*`.
 
@@ -94,7 +94,7 @@ El usuario de prueba está limitado deliberadamente a un Supabase local; el scri
 
 El script requiere `ALLOW_TEST_USER_SEED=true` y solo acepta `localhost`, `127.0.0.1` o `::1`; no crea cuentas en el Supabase alojado.
 
-Las recomendaciones usan la API de Responses de OpenRouter y el modelo `openai/gpt-oss-120b`. En desarrollo local, configura `OPENROUTER_API_KEY` con una clave creada en OpenRouter; `OPENROUTER_MODEL` puede cambiarse por otro identificador disponible allí. En Docker Compose o en el despliegue, configura ambas variables en el servidor. La clave se usa solo en el servidor: no le agregues el prefijo `VITE_`. La función no envía datos a OpenRouter hasta que la persona marca la autorización y solicita el análisis. En ese momento se envían el texto extraído del documento y las deudas confirmadas. Los PDF escaneados como imagen no tienen OCR.
+Las recomendaciones usan la API de chat completions de Groq y el modelo `openai/gpt-oss-120b`. En desarrollo local, configura `GROQ_API_KEY` con una clave creada en Groq; `GROQ_MODEL` puede cambiarse por otro identificador disponible allí. En Docker Compose o en el despliegue, configura ambas variables en el servidor. La clave se usa solo en el servidor: no le agregues el prefijo `VITE_`. La función no envía datos a Groq hasta que la persona marca la autorización y solicita el análisis. En ese momento se envían el texto extraído del documento y las deudas confirmadas. Los PDF escaneados como imagen no tienen OCR.
 
 ## Despliegue con Docker
 
@@ -110,7 +110,7 @@ La aplicación queda disponible en `http://localhost:3000` (o en el puerto defin
 
 1. Importa el repositorio de GitHub en Vercel y selecciona la carpeta `grow-your-loan` como raíz del proyecto si el repositorio contiene otras carpetas.
 2. Usa `bun install` como comando de instalación y `bun run build` como comando de compilación. La configuración de Nitro genera el despliegue de servidor para Vercel.
-3. Añade las variables de Supabase necesarias y `OPENROUTER_API_KEY` y `OPENROUTER_MODEL` en la configuración del proyecto de Vercel para Preview y Production. Mantén `SUPABASE_SERVICE_ROLE_KEY` y `OPENROUTER_API_KEY` como variables secretas del servidor.
+3. Añade las variables de Supabase necesarias y `GROQ_API_KEY` y `GROQ_MODEL` en la configuración del proyecto de Vercel para Preview y Production. Mantén `SUPABASE_SERVICE_ROLE_KEY` y `GROQ_API_KEY` como variables secretas del servidor.
 4. Después del primer despliegue, agrega el dominio `*.vercel.app` asignado por Vercel a las URL permitidas de Supabase Authentication. Configura la URL de producción del sitio y las URL de redirección de autenticación.
 5. Configura Google OAuth en Supabase con las URL de producción y prueba el registro, el inicio de sesión y la recuperación de contraseña con el dominio de Vercel.
 

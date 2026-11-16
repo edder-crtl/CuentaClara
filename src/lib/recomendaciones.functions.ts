@@ -49,14 +49,11 @@ No inventes tasas, fechas, condiciones de entidades ni derechos legales. No prom
 Devuelve de 2 a 5 recomendaciones priorizadas. Si hay mora, explica que conviene verificar el saldo y contactar directamente a la entidad antes de pagar. Si no hay datos suficientes, indícalo y pide confirmar lo necesario.
 Devuelve solo el objeto que cumple el esquema solicitado.`;
 
-const openRouterResponseSchema = z.object({
-  output: z
+const groqResponseSchema = z.object({
+  choices: z
     .array(
       z.object({
-        type: z.string().optional(),
-        content: z
-          .array(z.object({ type: z.string().optional(), text: z.string().optional() }))
-          .optional(),
+        message: z.object({ content: z.string().nullable().optional() }),
       }),
     )
     .optional(),
@@ -65,20 +62,20 @@ const openRouterResponseSchema = z.object({
 export const solicitarRecomendaciones = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => solicitudSchema.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return {
         ok: false,
-        error: "Falta configurar OPENROUTER_API_KEY en las variables de entorno del servidor.",
+        error: "Falta configurar GROQ_API_KEY en las variables de entorno del servidor.",
       };
     }
 
     const obligaciones: Obligacion[] = data.obligaciones;
     const diagnostico = diagnosticar(obligaciones, data.ingresoMensual);
-    const modelo = process.env.OPENROUTER_MODEL?.trim() || "openai/gpt-oss-120b";
+    const modelo = process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b";
     let response: Response;
     try {
-      response = await fetch("https://openrouter.ai/api/v1/responses", {
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -87,34 +84,30 @@ export const solicitarRecomendaciones = createServerFn({ method: "POST" })
         signal: AbortSignal.timeout(45_000),
         body: JSON.stringify({
           model: modelo,
-          store: false,
-          max_output_tokens: 1200,
-          input: [
-            { role: "system", content: [{ type: "input_text", text: instrucciones }] },
+          messages: [
+            { role: "system", content: instrucciones },
             {
               role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: JSON.stringify({
-                    textoDelReporte: data.textoReporte || null,
-                    ingresoMensualCOP: data.ingresoMensual,
-                    obligacionesConfirmadas: obligaciones,
-                    resumenCalculado: {
-                      deudaTotalCOP: diagnostico.totalDeuda,
-                      cuotasMensualesCOP: diagnostico.totalCuotas,
-                      porcentajeDelIngresoEnCuotas: Math.round(diagnostico.porcentajeIngreso * 100),
-                      obligacionesEnMora: diagnostico.enMora,
-                      obligacionesSinCuotaConfirmada: diagnostico.sinCuota,
-                    },
-                  }),
+              content: JSON.stringify({
+                textoDelReporte: data.textoReporte || null,
+                ingresoMensualCOP: data.ingresoMensual,
+                obligacionesConfirmadas: obligaciones,
+                resumenCalculado: {
+                  deudaTotalCOP: diagnostico.totalDeuda,
+                  cuotasMensualesCOP: diagnostico.totalCuotas,
+                  porcentajeDelIngresoEnCuotas: Math.round(diagnostico.porcentajeIngreso * 100),
+                  obligacionesEnMora: diagnostico.enMora,
+                  obligacionesSinCuotaConfirmada: diagnostico.sinCuota,
                 },
-              ],
+              }),
             },
           ],
-          text: {
-            format: {
-              type: "json_schema",
+          max_completion_tokens: 2048,
+          reasoning_effort: "medium",
+          stream: false,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
               name: "recomendaciones_financieras",
               strict: true,
               schema: outputSchema,
@@ -131,7 +124,7 @@ export const solicitarRecomendaciones = createServerFn({ method: "POST" })
 
     if (!response.ok) {
       console.error(
-        `[OpenRouter] La solicitud de recomendaciones falló con HTTP ${response.status}.`,
+        `[Groq] La solicitud de recomendaciones falló con HTTP ${response.status}.`,
       );
       return {
         ok: false,
@@ -146,14 +139,12 @@ export const solicitarRecomendaciones = createServerFn({ method: "POST" })
       return { ok: false, error: "El servicio de recomendaciones devolvió una respuesta inválida." };
     }
 
-    const payload = openRouterResponseSchema.safeParse(responseBody);
+    const payload = groqResponseSchema.safeParse(responseBody);
     if (!payload.success) {
       return { ok: false, error: "El servicio de recomendaciones devolvió una respuesta inválida." };
     }
 
-    const texto = payload.data.output
-      ?.find((item) => item.type === "message")
-      ?.content?.find((item) => item.type === "output_text")?.text;
+    const texto = payload.data.choices?.[0]?.message.content;
 
     if (!texto) {
       return {
